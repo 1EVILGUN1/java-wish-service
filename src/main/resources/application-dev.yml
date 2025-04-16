@@ -1,0 +1,18 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+  r2dbc:
+    url: r2dbc:h2:mem:///testdb
+    username: sa
+    password:
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql  # Указываем правильный путь
+      platform: h2
+  logging:
+    level:
+      org.springframework: DEBUG
+      org.springframework.r2dbc: DEBUG
+      io.r2dbc.h2: DEBUG

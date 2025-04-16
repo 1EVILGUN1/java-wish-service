@@ -1,0 +1,16 @@
+#spring:
+#  sql:
+#    init:
+#      mode: always # Автоматически выполняет schema.sql и data.sql (если есть)
+#      schema-locations: classpath:schema.sql
+
+jwt:
+  secret: your_very_secure_secret_key_32_chars_long
+  access:
+    expiration: 259200000  # 3 дня в миллисекундах (3 * 24 * 60 * 60 * 1000)
+  refresh:
+    expiration: 604800000  # 7 дней в миллисекундах (7 * 24 * 60 * 60 * 1000)
+logging:
+  level:
+    org.springframework: info
+    com.yourpackage: debug
