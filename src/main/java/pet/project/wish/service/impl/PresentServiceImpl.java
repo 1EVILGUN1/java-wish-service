@@ -21,13 +21,20 @@ public class PresentServiceImpl implements PresentService {
     private final PresentMapper mapper;
 
     @Override
-    public Mono<Present> create(Present present) {
-        return null;
+    public Mono<PresentFullDto> create(PresentFullDto dto) {
+        return Mono.defer(()->mapper.mapToPresentMono(dto))
+                .flatMap(repository::save)
+                .switchIfEmpty(Mono.error(new NotFoundException("Present error write database")))
+                .flatMap(mapper::mapToPresentFull)
+                .as(transactionalOperator::transactional);
     }
 
     @Override
-    public Mono<Present> update(Present present) {
-        return null;
+    public Mono<PresentFullDto> update(PresentFullDto dto) {
+        return Mono.defer(() -> mapper.mapToPresentMono(dto))
+                .flatMap(repository::save)
+                .flatMap(mapper::mapToPresentFull)
+                .as(transactionalOperator::transactional);
     }
 
     @Override
@@ -43,8 +50,8 @@ public class PresentServiceImpl implements PresentService {
     }
 
     @Override
-    public void delete(Long id) {
-
+    public Mono<Void> delete(Long id) {
+        return repository.deleteById(id);
     }
 
     @Override

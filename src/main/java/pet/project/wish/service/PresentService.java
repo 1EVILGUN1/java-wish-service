@@ -7,10 +7,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface PresentService {
-    Mono<Present> create(Present present);
-    Mono<Present> update(Present present);
+    Mono<PresentFullDto> create(PresentFullDto dto);
+    Mono<PresentFullDto> update(PresentFullDto dto);
     Mono<PresentFullDto> getId(Long id);
     Flux<Present> getAll();
-    void delete(Long id);
+    Mono<Void> delete(Long id);
     Flux<PresentSmallDto> getPresentsUser(Flux<Long> ids);
 }

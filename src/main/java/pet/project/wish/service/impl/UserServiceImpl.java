@@ -15,8 +15,6 @@ import pet.project.wish.service.UserService;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -37,8 +35,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Mono<User> update(User user) {
-        return null;
+    public Mono<UserDto> update(UserCreatedDto dto,Long id) {
+        return Mono.defer(() -> mapper.mapToUserCreatedDto(dto))
+                .doOnNext(user -> user.setId(id))
+                .flatMap(repository::save)
+                .flatMap(mapper::mapToUser)
+                .as(transactionalOperator::transactional);
+
     }
 
     @Override
@@ -54,8 +57,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void delete(Long id) {
-
+    public Mono<Void> delete(Long id) {
+           return repository.deleteById(id);
     }
 
     @Override

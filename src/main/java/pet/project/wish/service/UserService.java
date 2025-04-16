@@ -8,18 +8,16 @@ import pet.project.wish.model.User;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-
 public interface UserService {
     Mono<UserDto> create(UserCreatedDto dto);
 
-    Mono<User> update(User user);
+    Mono<UserDto> update(UserCreatedDto dto, Long id);
 
     Mono<UserDto> getId(Long id);
 
     Flux<User> getAll();
 
-    void delete(Long id);
+    Mono<Void> delete(Long id);
 
     Mono<UserDto> login(UserAuthDto dto);
 

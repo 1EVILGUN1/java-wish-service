@@ -12,7 +12,7 @@ import reactor.core.publisher.Mono;
 @Component
 public class PresentMapper {
 
-    public Mono<PresentSmallDto> mapToPresent(Present present) {
+    public Mono<PresentSmallDto> mapToPresentSmallDtoMono(Present present) {
         return Mono.just(PresentSmallDto.builder()
                 .id(present.getId())
                 .title(present.getTitle())
@@ -37,5 +37,15 @@ public class PresentMapper {
                 .url(present.getUrl())
                 .build()
         );
+    }
+
+    public Mono<Present> mapToPresentMono(PresentFullDto dto) {
+        Present present = new Present();
+        present.setId(dto.id());
+        present.setTitle(dto.title());
+        present.setUrl(dto.url());
+        present.setDescription(dto.description());
+        present.setLinks(dto.links());
+        return Mono.just(present);
     }
 }
