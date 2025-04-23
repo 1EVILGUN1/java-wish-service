@@ -51,7 +51,8 @@ public class PresentServiceImpl implements PresentService {
 
     @Override
     public Mono<Void> delete(Long id) {
-        return repository.deleteById(id);
+        return repository.deleteById(id)
+                .as(transactionalOperator::transactional);
     }
 
     @Override

@@ -22,4 +22,6 @@ public interface UserService {
     Mono<UserDto> login(UserAuthDto dto);
 
     Flux<FriendUserDto> getFriends(Flux<Long> friendIds);
+
+    Mono<UserDto> getFriend(Long userId, Long friendId);
 }

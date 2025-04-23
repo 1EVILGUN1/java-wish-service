@@ -15,5 +15,17 @@ public class ErrorHandler {
         return Mono.just(new ErrorResponse(ex.getMessage()));
     }
 
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public Mono<ErrorResponse> handleGenericException(Exception ex) {
+        return Mono.just(new ErrorResponse("Internal server error: " + ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidTokenException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public Mono<ErrorResponse> handleInvalidTokenException(InvalidTokenException ex) {
+        return Mono.just(new ErrorResponse(ex.getMessage()));
+    }
+
     record ErrorResponse(String message) {}
 }

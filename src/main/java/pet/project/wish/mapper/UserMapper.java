@@ -27,8 +27,7 @@ public class UserMapper {
                 .presentIds(user.getPresentIds())
                 .url(user.getUrl())
                 .token(new Token(jwt.generateRefreshToken(user.getId()), jwt.generateAccessToken(user.getId())))
-                .build()
-        );
+                .build());
     }
 
     public Flux<FriendUserDto> mapToFriendUsers(Flux<User> users) {
@@ -53,6 +52,18 @@ public class UserMapper {
         user.setName(dto.name());
         user.setPassword(dto.password());
         return Mono.just(user);
+    }
+
+    public Mono<UserDto> mapToFriendUserDto(Mono<User> user) {
+        return user.map(userDb -> UserDto.builder()
+                .id(userDb.getId())
+                .name(userDb.getName())
+                .lastName(userDb.getLastName())
+                .birthday(userDb.getBirthday())
+                .friendsIds(userDb.getFriendsIds())
+                .presentIds(userDb.getPresentIds())
+                .url(userDb.getUrl())
+                .build());
     }
 }
 

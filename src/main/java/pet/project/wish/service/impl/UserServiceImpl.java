@@ -24,10 +24,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Mono<UserDto> create(UserCreatedDto dto) {
-        return Mono.defer(() ->
-                        // Преобразуем DTO в User (без блокировки)
-                        mapper.mapToUserCreatedDto(dto)
-                )
+        return Mono.defer(() -> mapper.mapToUserCreatedDto(dto))
                 .flatMap(repository::save)
                 .switchIfEmpty(Mono.error(new NotFoundException("User not found")))  // Сохраняем реактивно
                 .flatMap(mapper::mapToUser) // Преобразуем в UserDto
@@ -73,5 +70,12 @@ public class UserServiceImpl implements UserService {
         return repository.findByIdsCustom(friendIds)
                 .switchIfEmpty(Flux.error(new NotFoundException("Friends not found")))
                 .transform(mapper::mapToFriendUsers);
+    }
+
+    @Override
+    public Mono<UserDto> getFriend(Long userId, Long friendId) {
+        return repository.getFriend(userId, friendId)
+                .switchIfEmpty(Mono.error(new NotFoundException("Friend not found")))
+                .transform(mapper::mapToFriendUserDto);
     }
 }
