@@ -14,8 +14,8 @@ import pet.project.wish.service.UserService;
 import reactor.core.publisher.Mono;
 
 @Slf4j
-@CrossOrigin
 @RestController
+@CrossOrigin
 @RequiredArgsConstructor
 public class UserCRUDController {
     private final UserService service;
