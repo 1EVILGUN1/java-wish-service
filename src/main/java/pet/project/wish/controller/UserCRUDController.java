@@ -23,6 +23,7 @@ public class UserCRUDController {
 
     @PostMapping(value = "/sign-up", produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<UserDto> signUpUser(@RequestBody @Valid UserCreatedDto dto) {
+        log.info("signUpUser: {}", dto);
         return service.create(dto);
     }
 
@@ -39,4 +40,8 @@ public class UserCRUDController {
                 .onErrorResume(NotFoundException.class, ex -> Mono.empty());
     }
 
+    @GetMapping("/test")
+    public Mono<String> test(){
+        return Mono.just("test");
+    }
 }
