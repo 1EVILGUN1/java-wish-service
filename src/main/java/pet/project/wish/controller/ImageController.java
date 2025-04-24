@@ -1,19 +1,21 @@
 package pet.project.wish.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.MediaType;
-import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
+import pet.project.wish.dto.ImageUploadDto;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/images")
 public class ImageController {
@@ -22,58 +24,69 @@ public class ImageController {
     private static final String USERS_PATH = BASE_PATH + "/users";
 
     // Загрузка основного изображения пользователя
-    @PostMapping(value = "/{username}/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/{username}/profile", consumes = MediaType.APPLICATION_JSON_VALUE)
     public Mono<String> uploadProfileImage(
             @PathVariable String username,
-            @RequestPart("file") Mono<FilePart> filePartMono) {
-        return filePartMono.flatMap(filePart -> {
+            @RequestBody ImageUploadDto dto) {
+        return Mono.fromCallable(() -> {
             try {
+                // Декодируем Base64
+                String base64Image = cleanBase64(dto.image());
+                byte[] imageBytes = Base64.getDecoder().decode(base64Image);
+
                 // Создаем директории, если они не существуют
                 Path userDir = Paths.get(USERS_PATH, username);
                 Files.createDirectories(userDir);
 
                 // Формируем имя файла
-                String originalFilename = filePart.filename();
-                String extension = getFileExtension(originalFilename);
+                String extension = dto.extension() != null ? dto.extension().toLowerCase() : "jpg";
                 String newFilename = username + "." + extension;
 
                 // Сохраняем файл
                 Path filePath = userDir.resolve(newFilename);
-                filePart.transferTo(filePath).block();
+                Files.write(filePath, imageBytes);
 
                 // Возвращаем URL
-                return Mono.just(String.format("/image/users/%s/%s", username, newFilename));
+                return String.format("/image/users/%s/%s", username, newFilename);
             } catch (IOException e) {
-                return Mono.error(new RuntimeException("Failed to save profile image", e));
+                throw new RuntimeException("Failed to save profile image", e);
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("Invalid Base64 image data", e);
             }
         });
     }
 
     // Загрузка изображения подарка
-    @PostMapping(value = "/{username}/presents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/{username}/presents", consumes = MediaType.APPLICATION_JSON_VALUE)
     public Mono<String> uploadPresentImage(
             @PathVariable String username,
-            @RequestPart("file") Mono<FilePart> filePartMono,
+            @RequestBody ImageUploadDto dto,
             @RequestParam("title") String title) {
-        return filePartMono.flatMap(filePart -> {
+        return Mono.fromCallable(() -> {
             try {
+                // Декодируем Base64
+                String base64Image = cleanBase64(dto.image());
+                byte[] imageBytes = Base64.getDecoder().decode(base64Image);
+
                 // Создаем директории
                 Path presentsDir = Paths.get(USERS_PATH, username, "presents");
                 Files.createDirectories(presentsDir);
 
                 // Очищаем title и формируем имя файла
                 String cleanTitle = title.replaceAll("[^a-zA-Z0-9]", "_");
-                String extension = getFileExtension(filePart.filename());
+                String extension = dto.extension() != null ? dto.extension().toLowerCase() : "jpg";
                 String newFilename = cleanTitle + "_" + UUID.randomUUID() + "." + extension;
 
                 // Сохраняем файл
                 Path filePath = presentsDir.resolve(newFilename);
-                filePart.transferTo(filePath).block();
+                Files.write(filePath, imageBytes);
 
                 // Возвращаем URL
-                return Mono.just(String.format("/image/users/%s/presents/%s", username, newFilename));
+                return String.format("/image/users/%s/presents/%s", username, newFilename);
             } catch (IOException e) {
-                return Mono.error(new RuntimeException("Failed to save present image", e));
+                throw new RuntimeException("Failed to save present image", e);
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("Invalid Base64 image data", e);
             }
         });
     }
@@ -108,8 +121,15 @@ public class ImageController {
         });
     }
 
-    // Вспомогательный метод для получения расширения файла
-    private String getFileExtension(String filename) {
-        return filename.substring(filename.lastIndexOf(".") + 1).toLowerCase();
+    // Очистка Base64 (удаление префикса data:image/*;base64,)
+    private String cleanBase64(String base64Image) {
+        if (base64Image == null) {
+            throw new IllegalArgumentException("Base64 image string is null");
+        }
+        // Удаляем префикс, если он есть (например, data:image/jpeg;base64,)
+        if (base64Image.startsWith("data:image")) {
+            return base64Image.substring(base64Image.indexOf(",") + 1);
+        }
+        return base64Image.trim();
     }
 }

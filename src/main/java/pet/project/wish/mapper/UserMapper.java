@@ -2,10 +2,9 @@ package pet.project.wish.mapper;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import pet.project.wish.dto.Token;
-import pet.project.wish.dto.UserAuthDto;
-import pet.project.wish.dto.UserCreatedDto;
-import pet.project.wish.dto.UserDto;
+import pet.project.wish.dto.user.UserAuthDto;
+import pet.project.wish.dto.user.UserCreatedDto;
+import pet.project.wish.dto.user.UserDto;
 import pet.project.wish.dto.FriendUserDto;
 import pet.project.wish.model.User;
 import pet.project.wish.service.JwtUtil;
@@ -26,7 +25,6 @@ public class UserMapper {
                 .friendsIds(user.getFriendsIds())
                 .presentIds(user.getPresentIds())
                 .url(user.getUrl())
-                .token(new Token(jwt.generateRefreshToken(user.getId()), jwt.generateAccessToken(user.getId())))
                 .build());
     }
 
@@ -64,6 +62,18 @@ public class UserMapper {
                 .presentIds(userDb.getPresentIds())
                 .url(userDb.getUrl())
                 .build());
+    }
+
+    public Mono<User> mapToUserDto(UserDto userDto) {
+            User userDb = new User();
+            userDb.setId(userDto.id());
+            userDb.setName(userDto.name());
+            userDb.setLastName(userDto.lastName());
+            userDb.setBirthday(userDto.birthday());
+            userDb.setUrl(userDto.url());
+            userDb.setFriendsIds(userDto.friendsIds());
+            userDb.setPresentIds(userDto.presentIds());
+            return Mono.just(userDb);
     }
 }
 

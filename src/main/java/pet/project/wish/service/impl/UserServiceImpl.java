@@ -4,9 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import pet.project.wish.dto.FriendUserDto;
-import pet.project.wish.dto.UserAuthDto;
-import pet.project.wish.dto.UserCreatedDto;
-import pet.project.wish.dto.UserDto;
+import pet.project.wish.dto.user.UserAuthDto;
+import pet.project.wish.dto.user.UserCreatedDto;
+import pet.project.wish.dto.user.UserDto;
 import pet.project.wish.error.NotFoundException;
 import pet.project.wish.mapper.UserMapper;
 import pet.project.wish.model.User;
@@ -77,5 +77,24 @@ public class UserServiceImpl implements UserService {
         return repository.getFriend(userId, friendId)
                 .switchIfEmpty(Mono.error(new NotFoundException("Friend not found")))
                 .transform(mapper::mapToFriendUserDto);
+    }
+
+    @Override
+    public Mono<Void> addPresent(Long userId, Long presentId) {
+        return getId(userId)
+                .flatMap(userDto -> {
+                    // Получаем пользователя из DTO
+                    return mapper.mapToUserDto(userDto) // Предполагается, что есть метод mapToUserEntity
+                            .flatMap(user -> {
+                                // Добавляем presentId в список, если его там нет
+                                if (!user.getPresentIds().contains(presentId)) {
+                                    user.getPresentIds().add(presentId);
+                                }
+                                // Сохраняем обновленного пользователя
+                                return repository.save(user);
+                            });
+                })
+                .then() // Преобразуем в Mono<Void>
+                .as(transactionalOperator::transactional); // Обеспечиваем транзакционность
     }
 }

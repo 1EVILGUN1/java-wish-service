@@ -3,8 +3,9 @@ package pet.project.wish.mapper;
 
 
 import org.springframework.stereotype.Component;
-import pet.project.wish.dto.PresentFullDto;
-import pet.project.wish.dto.PresentSmallDto;
+import pet.project.wish.dto.present.PresentFullDto;
+import pet.project.wish.dto.present.PresentRequestDto;
+import pet.project.wish.dto.present.PresentSmallDto;
 import pet.project.wish.model.Present;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -46,6 +47,16 @@ public class PresentMapper {
         present.setUrl(dto.url());
         present.setDescription(dto.description());
         present.setLinks(dto.links());
+        return Mono.just(present);
+    }
+
+    public Mono<Present> mapToPresentRequestDto(PresentRequestDto dto) {
+        Present present = new Present();
+        present.setTitle(dto.title());
+        present.setDescription(dto.description());
+        present.setLinks(dto.links());
+        present.setUrl(dto.url());
+        present.setReserved(dto.reserved());
         return Mono.just(present);
     }
 }

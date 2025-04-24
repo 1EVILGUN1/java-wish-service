@@ -3,8 +3,9 @@ package pet.project.wish.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
-import pet.project.wish.dto.PresentFullDto;
-import pet.project.wish.dto.PresentSmallDto;
+import pet.project.wish.dto.present.PresentFullDto;
+import pet.project.wish.dto.present.PresentRequestDto;
+import pet.project.wish.dto.present.PresentSmallDto;
 import pet.project.wish.error.NotFoundException;
 import pet.project.wish.mapper.PresentMapper;
 import pet.project.wish.model.Present;
@@ -21,8 +22,8 @@ public class PresentServiceImpl implements PresentService {
     private final PresentMapper mapper;
 
     @Override
-    public Mono<PresentFullDto> create(PresentFullDto dto) {
-        return Mono.defer(()->mapper.mapToPresentMono(dto))
+    public Mono<PresentFullDto> create(PresentRequestDto dto) {
+        return Mono.defer(()->mapper.mapToPresentRequestDto(dto))
                 .flatMap(repository::save)
                 .switchIfEmpty(Mono.error(new NotFoundException("Present error write database")))
                 .flatMap(mapper::mapToPresentFull)

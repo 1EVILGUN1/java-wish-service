@@ -1,4 +1,4 @@
-package pet.project.wish.dto;
+package pet.project.wish.dto.present;
 
 import lombok.Builder;
 import pet.project.wish.model.Present;

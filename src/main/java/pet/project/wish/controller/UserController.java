@@ -6,20 +6,19 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
-import pet.project.wish.dto.FriendUserDto;
-import pet.project.wish.dto.Token;
-import pet.project.wish.dto.UserAuthDto;
-import pet.project.wish.dto.UserDto;
-import pet.project.wish.error.InvalidTokenException;
+import pet.project.wish.dto.*;
+import pet.project.wish.dto.user.UserAuthDto;
+import pet.project.wish.dto.user.UserDto;
+import pet.project.wish.dto.user.UserSignUpResponseDto;
 import pet.project.wish.error.NotFoundException;
 import pet.project.wish.service.JwtUtil;
 import pet.project.wish.service.UserService;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.Collections;
 
 @Slf4j
 @CrossOrigin
@@ -30,9 +29,14 @@ public class UserController {
     private final JwtUtil jwt;
 
 
-    @PostMapping(value = "/sing-in", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Mono<UserDto> signInUser(@RequestBody @Valid UserAuthDto dto) {
-        return service.login(dto);
+    @PostMapping(value = "/sign-in", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Mono<UserSignUpResponseDto> signInUser(@RequestBody @Valid UserAuthDto dto) {
+        log.info("signInUser: {}", dto);
+        return service.login(dto)
+                .flatMap(userDto -> Mono.just(UserSignUpResponseDto.builder()
+                        .user(userDto)
+                        .token(new Token(jwt.generateRefreshToken(userDto.id()), jwt.generateAccessToken(userDto.id())))
+                        .build()));
     }
 
     @PostMapping(value = "/refresh", produces = MediaType.APPLICATION_JSON_VALUE) // Используем POST вместо GET
@@ -47,7 +51,12 @@ public class UserController {
     public Flux<FriendUserDto> getFriends(@RequestHeader("Authorization") @NotBlank String token) {
         jwt.validateToken(token);
         return service.getId(jwt.getUserIdFromToken(token))
-                .flatMapMany(userDto -> service.getFriends(Flux.fromIterable(userDto.friendsIds())));
+                .flatMapMany(userDto -> {
+                    Iterable<Long> ids = userDto.friendsIds() != null ? userDto.friendsIds() : Collections.emptyList();
+                    return service.getFriends(Flux.fromIterable(ids))
+                            .onErrorResume(NotFoundException.class, e -> Flux.empty());
+
+                });
     }
 
     @GetMapping(value = "/friend/{id}", produces = MediaType.APPLICATION_JSON_VALUE)

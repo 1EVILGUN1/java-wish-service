@@ -1,7 +1,6 @@
-package pet.project.wish.dto;
+package pet.project.wish.dto.user;
 
 import lombok.Builder;
-import lombok.Value;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -11,5 +10,5 @@ import java.util.List;
  */
 @Builder
 public record UserDto(Long id, String name, String lastName, LocalDate birthday, List<Long> friendsIds,
-                      List<Long> presentIds, String url, Token token) {
+                      List<Long> presentIds, String url) {
 }
