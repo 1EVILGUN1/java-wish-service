@@ -10,7 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import pet.project.wish.dto.*;
 import pet.project.wish.dto.user.UserAuthDto;
-import pet.project.wish.dto.user.UserDto;
+import pet.project.wish.dto.user.UserResponseDto;
 import pet.project.wish.dto.user.UserSignUpResponseDto;
 import pet.project.wish.error.NotFoundException;
 import pet.project.wish.service.JwtUtil;
@@ -48,7 +48,7 @@ public class UserController {
     }
 
     @GetMapping(value = "/friends", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Flux<FriendUserDto> getFriends(@RequestHeader("Authorization") @NotBlank String token) {
+    public Flux<FriendUserResponseDto> getFriends(@RequestHeader("Authorization") @NotBlank String token) {
         jwt.validateToken(token);
         return service.getId(jwt.getUserIdFromToken(token))
                 .flatMapMany(userDto -> {
@@ -60,9 +60,22 @@ public class UserController {
     }
 
     @GetMapping(value = "/friend/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Mono<UserDto> getFriend(@RequestHeader("Authorization") @NotBlank String token,
-                                   @PathVariable("id") @NotNull @Positive Long id) {
+    public Mono<UserResponseDto> getFriend(@RequestHeader("Authorization") @NotBlank String token,
+                                           @PathVariable("id") @NotNull @Positive Long id) {
         jwt.validateToken(token);
         return service.getFriend(jwt.getUserIdFromToken(token), id);
+    }
+
+    @GetMapping("/users")
+    public Flux<UserResponseDto> getUsers(@RequestHeader("Authorization") @NotBlank String token) {
+        jwt.validateToken(token);
+        return service.getAll();
+    }
+
+    @PutMapping("/friend/{id}")
+    public Mono<Void> addFriend(@RequestHeader("Authorization") @NotBlank String token,
+                                @PathVariable("id") @NotNull @Positive Long id){
+        jwt.validateToken(token);
+        return service.addFriend(jwt.getUserIdFromToken(token), id);
     }
 }

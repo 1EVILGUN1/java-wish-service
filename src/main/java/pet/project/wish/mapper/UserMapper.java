@@ -3,9 +3,9 @@ package pet.project.wish.mapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import pet.project.wish.dto.user.UserAuthDto;
-import pet.project.wish.dto.user.UserCreatedDto;
-import pet.project.wish.dto.user.UserDto;
-import pet.project.wish.dto.FriendUserDto;
+import pet.project.wish.dto.user.UserRequestCreatedDto;
+import pet.project.wish.dto.user.UserResponseDto;
+import pet.project.wish.dto.FriendUserResponseDto;
 import pet.project.wish.model.User;
 import pet.project.wish.service.JwtUtil;
 import reactor.core.publisher.Flux;
@@ -16,8 +16,8 @@ import reactor.core.publisher.Mono;
 public class UserMapper {
     private final JwtUtil jwt;
 
-    public Mono<UserDto> mapToUser(User user) {
-        return Mono.just(UserDto.builder()
+    public Mono<UserResponseDto> mapToUser(User user) {
+        return Mono.just(UserResponseDto.builder()
                 .id(user.getId())
                 .name(user.getName())
                 .lastName(user.getLastName())
@@ -28,15 +28,15 @@ public class UserMapper {
                 .build());
     }
 
-    public Flux<FriendUserDto> mapToFriendUsers(Flux<User> users) {
-        return users.map(user -> FriendUserDto.builder()
+    public Flux<FriendUserResponseDto> mapToFriendUsers(Flux<User> users) {
+        return users.map(user -> FriendUserResponseDto.builder()
                 .name(user.getName())
                 .lastName(user.getLastName())
                 .url(user.getUrl())
                 .build());
     }
 
-    public Mono<User> mapToUserCreatedDto(UserCreatedDto dto) {
+    public Mono<User> mapToUserCreatedDto(UserRequestCreatedDto dto) {
         User user = new User();
         user.setName(dto.name());
         user.setLastName(dto.lastName());
@@ -52,8 +52,8 @@ public class UserMapper {
         return Mono.just(user);
     }
 
-    public Mono<UserDto> mapToFriendUserDto(Mono<User> user) {
-        return user.map(userDb -> UserDto.builder()
+    public Mono<UserResponseDto> mapToFriendUserDto(Mono<User> user) {
+        return user.map(userDb -> UserResponseDto.builder()
                 .id(userDb.getId())
                 .name(userDb.getName())
                 .lastName(userDb.getLastName())
@@ -64,15 +64,15 @@ public class UserMapper {
                 .build());
     }
 
-    public Mono<User> mapToUserDto(UserDto userDto) {
+    public Mono<User> mapToUserDto(UserResponseDto userResponseDto) {
             User userDb = new User();
-            userDb.setId(userDto.id());
-            userDb.setName(userDto.name());
-            userDb.setLastName(userDto.lastName());
-            userDb.setBirthday(userDto.birthday());
-            userDb.setUrl(userDto.url());
-            userDb.setFriendsIds(userDto.friendsIds());
-            userDb.setPresentIds(userDto.presentIds());
+            userDb.setId(userResponseDto.id());
+            userDb.setName(userResponseDto.name());
+            userDb.setLastName(userResponseDto.lastName());
+            userDb.setBirthday(userResponseDto.birthday());
+            userDb.setUrl(userResponseDto.url());
+            userDb.setFriendsIds(userResponseDto.friendsIds());
+            userDb.setPresentIds(userResponseDto.presentIds());
             return Mono.just(userDb);
     }
 }

@@ -5,12 +5,12 @@ import jakarta.validation.constraints.Pattern;
 
 import java.util.List;
 
-public record PresentRequestDto(@NotBlank(message = "empty title")
+public record PresentRequestCreatedDto(@NotBlank(message = "empty title")
                                 @Pattern(regexp = "^[a-zA-Zа-яА-Я0-9\\s\\-!?.]*$", message = "contain invalid characters")
                                 String title,
-                                @Pattern(regexp = "^[a-zA-Zа-яА-Я0-9\\s\\-!?.]*$", message = "contain invalid characters")
+                                       @Pattern(regexp = "^[a-zA-Zа-яА-Я0-9\\s\\-!?.]*$", message = "contain invalid characters")
                                 String description,
-                                List<String> links,
-                                boolean reserved,
-                                String url) {
+                                       List<String> links,
+                                       boolean reserved,
+                                       String url) {
 }

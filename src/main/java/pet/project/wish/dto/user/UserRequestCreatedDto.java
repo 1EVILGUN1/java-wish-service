@@ -10,7 +10,7 @@ import java.time.LocalDate;
  * DTO for {@link User}
  */
 @Builder
-public record UserCreatedDto(
+public record UserRequestCreatedDto(
                              @NotBlank(message = "empty name")
                              @Pattern(regexp = "^[a-zA-Zа-яА-Я0-9\\s\\-!?.]*$", message = "contain invalid characters")
                              String name,

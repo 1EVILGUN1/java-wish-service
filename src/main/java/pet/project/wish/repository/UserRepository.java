@@ -26,4 +26,6 @@ public interface UserRepository extends ReactiveCrudRepository<User, Long> {
         """)
     Mono<User> getFriend(Long userId, Long friendId);
 
+    Mono<User> findFirstByName(String name);
+
 }
