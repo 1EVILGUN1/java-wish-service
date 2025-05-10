@@ -3,8 +3,10 @@ package pet.project.wish.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
-import pet.project.wish.dto.PresentFullDto;
-import pet.project.wish.dto.PresentSmallDto;
+import pet.project.wish.dto.present.PresentFullResponseDto;
+import pet.project.wish.dto.present.PresentRequestCreatedDto;
+import pet.project.wish.dto.present.PresentRequestUpdatedDto;
+import pet.project.wish.dto.present.PresentSmallResponseDto;
 import pet.project.wish.error.NotFoundException;
 import pet.project.wish.mapper.PresentMapper;
 import pet.project.wish.model.Present;
@@ -21,17 +23,24 @@ public class PresentServiceImpl implements PresentService {
     private final PresentMapper mapper;
 
     @Override
-    public Mono<Present> create(Present present) {
-        return null;
+    public Mono<PresentFullResponseDto> create(PresentRequestCreatedDto dto) {
+        return Mono.defer(()->mapper.mapToPresentRequestDto(dto))
+                .flatMap(repository::save)
+                .switchIfEmpty(Mono.error(new NotFoundException("Present error write database")))
+                .flatMap(mapper::mapToPresentFull)
+                .as(transactionalOperator::transactional);
     }
 
     @Override
-    public Mono<Present> update(Present present) {
-        return null;
+    public Mono<PresentFullResponseDto> update(PresentRequestUpdatedDto dto) {
+        return Mono.defer(() -> mapper.mapToPresentMono(dto))
+                .flatMap(repository::save)
+                .flatMap(mapper::mapToPresentFull)
+                .as(transactionalOperator::transactional);
     }
 
     @Override
-    public Mono<PresentFullDto> getId(Long id) {
+    public Mono<PresentFullResponseDto> getId(Long id) {
         return repository.findById(id)
                 .switchIfEmpty(Mono.error(new NotFoundException("Present not found")))
                 .flatMap(mapper::mapToPresentFull);
@@ -43,12 +52,13 @@ public class PresentServiceImpl implements PresentService {
     }
 
     @Override
-    public void delete(Long id) {
-
+    public Mono<Void> delete(Long id) {
+        return repository.deleteById(id)
+                .as(transactionalOperator::transactional);
     }
 
     @Override
-    public Flux<PresentSmallDto> getPresentsUser(Flux<Long> ids) {
+    public Flux<PresentSmallResponseDto> getPresentsUser(Flux<Long> ids) {
         return repository.findByIdsCustom(ids)
                 .switchIfEmpty(Flux.error(new NotFoundException("Present not found")))
                 .transform(mapper::mapToPresentSmall);

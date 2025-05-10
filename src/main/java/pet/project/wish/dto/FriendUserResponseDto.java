@@ -7,5 +7,5 @@ import pet.project.wish.model.User;
  * DTO for {@link User}
  */
 @Builder
-public record FriendUserDto(String name, String lastName, String url) {
+public record FriendUserResponseDto(String name, String lastName, String url) {
 }
