@@ -9,7 +9,7 @@ import pet.project.wish.dto.present.PresentRequestCreatedDto;
 import pet.project.wish.dto.present.PresentRequestUpdatedDto;
 import pet.project.wish.dto.present.PresentSmallResponseDto;
 import pet.project.wish.error.NotFoundException;
-import pet.project.wish.mapper.PresentMapper;
+import pet.project.wish.mapper.PresMapper;
 import pet.project.wish.model.Present;
 import pet.project.wish.repository.PresentRepository;
 import pet.project.wish.service.PresentService;
@@ -22,93 +22,80 @@ import reactor.core.publisher.Mono;
 public class PresentServiceImpl implements PresentService {
     private final TransactionalOperator transactionalOperator;
     private final PresentRepository repository;
-    private final PresentMapper mapper;
+    private final PresMapper mapper;
 
     @Override
     public Mono<PresentFullResponseDto> create(PresentRequestCreatedDto dto) {
-        log.info("Создание нового подарка с данными: {}", dto);
-        return Mono.defer(() -> {
-                    log.debug("Преобразование DTO в сущность подарка");
-                    return mapper.mapToPresentRequestDto(dto);
-                })
-                .flatMap(present -> {
-                    log.debug("Сохранение подарка в базе данных: {}", present);
-                    return repository.save(present);
-                })
-                .switchIfEmpty(Mono.error(new NotFoundException("Ошибка записи подарка в базу данных")))
-                .flatMap(present -> {
-                    log.debug("Преобразование сохраненного подарка в DTO: {}", present);
-                    return mapper.mapToPresentFull(present);
-                })
-                .as(transactionalOperator::transactional)
-                .doOnSuccess(result -> log.info("Успешно создан подарок: {}", result))
-                .doOnError(error -> log.error("Ошибка при создании подарка: {}", error.getMessage(), error));
+        log.info("Создание нового подарка: {}", dto.title());
+        return Mono.defer(() -> mapper.toEntityMono(dto))
+                .doOnNext(p -> log.debug("Преобразование DTO в сущность Present"))
+                .flatMap(repository::save)
+                .doOnNext(p -> log.debug("Подарок сохранен в БД с ID: {}", p.getId()))
+                .switchIfEmpty(Mono.defer(() -> {
+                    log.error("Ошибка сохранения подарка в БД");
+                    return Mono.error(new NotFoundException("Ошибка сохранения подарка в БД"));
+                }))
+                .flatMap(present -> mapper.toPresentFullResponseDtoMono(Mono.just(present)))
+                .doOnSuccess(p -> log.info("Подарок успешно создан. ID: {}", p.id()))
+                .doOnError(e -> log.error("Ошибка при создании подарка", e))
+                .as(transactionalOperator::transactional);
     }
 
     @Override
     public Mono<PresentFullResponseDto> update(PresentRequestUpdatedDto dto) {
-        log.info("Обновление подарка с данными: {}", dto);
-        return Mono.defer(() -> {
-                    log.debug("Преобразование DTO в сущность подарка для обновления");
-                    return mapper.mapToPresentMono(dto);
-                })
-                .flatMap(present -> {
-                    log.debug("Сохранение обновленного подарка в базе данных: {}", present);
-                    return repository.save(present);
-                })
-                .flatMap(present -> {
-                    log.debug("Преобразование обновленного подарка в DTO: {}", present);
-                    return mapper.mapToPresentFull(present);
-                })
-                .as(transactionalOperator::transactional)
-                .doOnSuccess(result -> log.info("Успешно обновлен подарок: {}", result))
-                .doOnError(error -> log.error("Ошибка при обновлении подарка: {}", error.getMessage(), error));
+        log.info("Обновление подарка с ID: {}", dto.id());
+        return Mono.defer(() -> mapper.toEntityMono(dto))
+                .doOnNext(p -> log.debug("Преобразование DTO в сущность для обновления"))
+                .flatMap(repository::save)
+                .doOnNext(p -> log.debug("Подарок обновлен в БД"))
+                .flatMap(present -> mapper.toPresentFullResponseDtoMono(Mono.just(present)))
+                .doOnSuccess(present -> log.info("Подарок с ID: {} успешно обновлен", present.id()))
+                .doOnError(e -> log.error("Ошибка при обновлении подарка", e))
+                .as(transactionalOperator::transactional);
     }
 
     @Override
     public Mono<PresentFullResponseDto> getId(Long id) {
-        log.info("Получение подарка по идентификатору: {}", id);
+        log.info("Получение подарка по ID: {}", id);
         return repository.findById(id)
-                .switchIfEmpty(Mono.error(new NotFoundException("Подарок не найден")))
-                .flatMap(present -> {
-                    log.debug("Преобразование найденного подарка в DTO: {}", present);
-                    return mapper.mapToPresentFull(present);
-                })
-                .doOnSuccess(result -> log.info("Успешно получен подарок: {}", result))
-                .doOnError(error -> log.error("Ошибка при получении подарка: {}", error.getMessage(), error));
+                .doOnNext(p -> log.debug("Найден подарок в БД: {}", p))
+                .switchIfEmpty(Mono.defer(() -> {
+                    log.warn("Подарок с ID: {} не найден", id);
+                    return Mono.error(new NotFoundException("Подарок не найден"));
+                }))
+                .flatMap(present -> mapper.toPresentFullResponseDtoMono(Mono.just(present)))
+                .doOnSuccess(p -> log.debug("Успешно получен подарок с ID: {}", p.id()))
+                .doOnError(e -> log.error("Ошибка при получении подарка", e));
     }
 
     @Override
     public Flux<Present> getAll() {
-        log.info("Получение всех подарков");
-        return repository.findAll()
-                .doOnComplete(() -> log.info("Успешно получены все подарки"))
-                .doOnError(error -> log.error("Ошибка при получении всех подарков: {}", error.getMessage(), error));
+        log.warn("Метод getAll() не реализован");
+        return Flux.empty();
     }
 
     @Override
     public Mono<Void> delete(Long id) {
-        log.info("Удаление подарка по идентификатору: {}", id);
+        log.info("Удаление подарка с ID: {}", id);
         return repository.deleteById(id)
-                .as(transactionalOperator::transactional)
-                .doOnSuccess(v -> log.info("Успешно удален подарок с идентификатором: {}", id))
-                .doOnError(error -> log.error("Ошибка при удалении подарка: {}", error.getMessage(), error));
+                .doOnSuccess(v -> log.info("Подарок с ID: {} успешно удален", id))
+                .doOnError(e -> log.error("Ошибка при удалении подарка с ID: {}", id, e))
+                .as(transactionalOperator::transactional);
     }
 
     @Override
     public Flux<PresentSmallResponseDto> getPresentsUser(Flux<Long> ids) {
-        log.info("Получение подарков пользователя по идентификаторам: {}", ids);
+        log.info("Получение списка подарков пользователя");
         return ids.collectList()
-                .flatMapMany(idList -> {
-                    log.debug("Поиск подарков по идентификаторам: {}", idList);
-                    return repository.findByIdsCustom(idList);
-                })
-                .switchIfEmpty(Mono.error(new NotFoundException("Подарки не найдены")))
-                .transform(presents -> {
-                    log.debug("Преобразование подарков в DTO: {}", presents);
-                    return mapper.mapToPresentSmall(presents);
-                })
-                .doOnComplete(() -> log.info("Успешно получены подарки пользователя"))
-                .doOnError(error -> log.error("Ошибка при получении подарков пользователя: {}", error.getMessage(), error));
+                .doOnNext(idList -> log.debug("Получено {} ID подарков", idList.size()))
+                .flatMapMany(repository::findByIdsCustom)
+                .doOnNext(p -> log.debug("Обработка подарка с ID: {}", p.getId()))
+                .switchIfEmpty(Flux.defer(() -> {
+                    log.warn("Подарки не найдены");
+                    return Flux.error(new NotFoundException("Подарки не найдены"));
+                }))
+                .transform(mapper::toPresentSmallResponseDtos)
+                .doOnComplete(() -> log.debug("Завершена обработка списка подарков"))
+                .doOnError(e -> log.error("Ошибка при получении списка подарков", e));
     }
 }
