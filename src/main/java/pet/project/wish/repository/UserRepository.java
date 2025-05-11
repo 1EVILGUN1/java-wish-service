@@ -13,9 +13,19 @@ import java.util.List;
 
 @Repository
 public interface UserRepository extends ReactiveCrudRepository<User, Long> {
-    Mono<User> findFirstByNameAndPassword(String name, String password);
+    Mono<User> findUserByNameAndPassword(String name, String password);
 
     @Query("SELECT * FROM users WHERE id IN (:ids)")
     Flux<User> findByIdsCustom(@Param("ids") Flux<Long> ids);
+
+    @Query("""
+        SELECT u2.id, u2.name, u2.last_name, u2.password, u2.birthday, u2.friends_ids, u2.present_ids, u2.url
+        FROM users u1
+        JOIN users u2 ON u2.id = :friendId
+        WHERE u1.id = :userId AND :friendId = ANY(u1.friends_ids)
+        """)
+    Mono<User> getFriend(Long userId, Long friendId);
+
+    Mono<User> findFirstByName(String name);
 
 }

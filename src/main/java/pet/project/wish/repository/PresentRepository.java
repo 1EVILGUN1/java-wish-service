@@ -11,6 +11,6 @@ import reactor.core.publisher.Flux;
 @Repository
 public interface PresentRepository extends ReactiveCrudRepository<Present, Long> {
     @Query("SELECT * FROM presents WHERE id IN (:ids)")
-    Flux<Present> findByIdsCustom(@Param("ids") Flux<Long> ids);
+    Flux<Present> findByIdsCustom(@Param("ids") Iterable<Long> ids);
 
 }

@@ -1,27 +1,33 @@
 package pet.project.wish.service;
 
-import pet.project.wish.dto.FriendUserDto;
-import pet.project.wish.dto.UserAuthDto;
-import pet.project.wish.dto.UserCreatedDto;
-import pet.project.wish.dto.UserDto;
+import pet.project.wish.dto.FriendUserResponseDto;
+import pet.project.wish.dto.user.UserAuthDto;
+import pet.project.wish.dto.user.UserRequestCreatedDto;
+import pet.project.wish.dto.user.UserResponseDto;
 import pet.project.wish.model.User;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-
 public interface UserService {
-    Mono<UserDto> create(UserCreatedDto dto);
+    Mono<UserResponseDto> create(UserRequestCreatedDto dto);
 
-    Mono<User> update(User user);
+    Mono<UserResponseDto> update(UserRequestCreatedDto dto, Long id);
 
-    Mono<UserDto> getId(Long id);
+    Mono<UserResponseDto> getId(Long id);
 
-    Flux<User> getAll();
+    Flux<UserResponseDto> getAll();
 
-    void delete(Long id);
+    Mono<Void> delete(Long id);
 
-    Mono<UserDto> login(UserAuthDto dto);
+    Mono<UserResponseDto> login(UserAuthDto dto);
 
-    Flux<FriendUserDto> getFriends(Flux<Long> friendIds);
+    Flux<FriendUserResponseDto> getFriends(Flux<Long> friendIds);
+
+    Mono<UserResponseDto> getFriend(Long userId, Long friendId);
+
+    Mono<Void> addPresent(Long userId, Long presentId);
+
+    Mono<Void> removePresent(Long userId, Long presentId);
+
+    Mono<Void> addFriend(Long userId, Long friendId);
 }
