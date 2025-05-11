@@ -3,13 +3,19 @@ spring:
     activate:
       on-profile: dev
   r2dbc:
-    url: r2dbc:h2:mem:///testdb
+    url: r2dbc:h2:file:///./data/mydb  # Будет создана в папке `./data/mydb.mv.db`
     username: sa
     password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: true  # Разрешить доступ с других устройств
   sql:
     init:
       mode: always
-      schema-locations: classpath:schema.sql  # Указываем правильный путь
+      schema-locations: classpath:schema.sql
       platform: h2
   logging:
     level:

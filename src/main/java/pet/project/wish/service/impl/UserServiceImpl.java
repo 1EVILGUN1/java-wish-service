@@ -1,6 +1,7 @@
 package pet.project.wish.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import pet.project.wish.dto.FriendUserResponseDto;
@@ -17,6 +18,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -62,7 +64,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Mono<UserResponseDto> login(UserAuthDto dto) {
-        return repository.findFirstByNameAndPassword(dto.name(), dto.password())
+        return repository.findUserByNameAndPassword(dto.name(), dto.password())
+                .log("User login" + dto)
                 .switchIfEmpty(Mono.error(new NotFoundException("User not found")))
                 .flatMap(mapper::mapToUser);
     }
@@ -83,10 +86,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Mono<Void> addPresent(Long userId, Long presentId) {
-        return getId(userId)
-                .flatMap(userDto -> {
-                    // Получаем пользователя из DTO
-                    return mapper.mapToUserDto(userDto) // Предполагается, что есть метод mapToUserEntity
+        return findByIdUserInDatabase(userId)// Предполагается, что есть метод mapToUserEntity
                             .flatMap(user -> {
                                 // Добавляем presentId в список, если его там нет
                                 if(user.getPresentIds() == null || user.getPresentIds().isEmpty()) {
@@ -97,28 +97,83 @@ public class UserServiceImpl implements UserService {
                                 }
                                 // Сохраняем обновленного пользователя
                                 return repository.save(user);
-                            });
-                })
+                            })
                 .then() // Преобразуем в Mono<Void>
-                .as(transactionalOperator::transactional); // Обеспечиваем транзакционность
+                .as(transactionalOperator::transactional) // Обеспечиваем транзакционность
+                .onErrorResume(e -> {
+                    if (e instanceof NotFoundException) {
+                        return Mono.error(e); // Пробрасываем NotFoundException как есть
+                    }
+                    log.error("Error removing present", e);
+                    return Mono.error(new RuntimeException("Failed to remove present", e));
+                });
+    }
+
+    @Override
+    public Mono<Void> removePresent(Long userId, Long presentId) {
+        return findByIdUserInDatabase(userId)
+                .flatMap(user -> {
+                    // Инициализируем список, если он null
+                    if (user.getPresentIds() == null) {
+                        user.setPresentIds(new ArrayList<>());
+                    }
+
+                    // Проверяем наличие подарка
+                    if (!user.getPresentIds().contains(presentId)) {
+                        return Mono.error(new NotFoundException("Present not found"));
+                    }
+
+                    // Удаляем подарок
+                    user.getPresentIds().remove(presentId);
+                    return repository.save(user);
+                })
+                .then()
+                .as(transactionalOperator::transactional)
+                .onErrorResume(e -> {
+                    if (e instanceof NotFoundException) {
+                        return Mono.error(e); // Пробрасываем NotFoundException как есть
+                    }
+                    log.error("Error removing present", e);
+                    return Mono.error(new RuntimeException("Failed to remove present", e));
+                });
     }
 
     @Override
     public Mono<Void> addFriend(Long userId, Long friendId) {
-        return getId(userId)
-                .flatMap(userDto ->{
-                    return mapper.mapToUserDto(userDto)
-                            .flatMap(user -> {
-                                if(user.getFriendsIds() == null || user.getFriendsIds().isEmpty()) {
-                                    user.setFriendsIds(new ArrayList<>());
-                                }
-                                if (!user.getFriendsIds().contains(friendId)) {
-                                    user.getFriendsIds().add(friendId);
-                                }
-                                return repository.save(user);
-                            });
+        return Mono.zip(
+                        findByIdUserInDatabase(userId),
+                        findByIdUserInDatabase(friendId)
+                )
+                .flatMap(tuple -> {
+                    User user = tuple.getT1();
+                    User friend = tuple.getT2();
+
+                    // Инициализация списка друзей если нужно
+                    if (user.getFriendsIds() == null) {
+                        user.setFriendsIds(new ArrayList<>());
+                    }
+
+                    // Добавляем друга если его еще нет в списке
+                    if (!user.getFriendsIds().contains(friendId)) {
+                        user.getFriendsIds().add(friendId);
+                        return repository.save(user);
+                    }
+
+                    return Mono.just(user);
                 })
                 .then()
+                .onErrorResume(e -> {
+                    // Логируем ошибку и возвращаем Mono.error или Mono.empty
+                    log.error("Error adding friend", e);
+                    return Mono.error(new RuntimeException("Failed to add friend"));
+                })
                 .as(transactionalOperator::transactional);
+    }
+
+
+
+    private Mono<User> findByIdUserInDatabase(Long id) {
+        return repository.findById(id)
+                .switchIfEmpty(Mono.error(new NotFoundException("User not found")));
     }
 }

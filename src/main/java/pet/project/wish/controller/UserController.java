@@ -76,6 +76,9 @@ public class UserController {
     public Mono<Void> addFriend(@RequestHeader("Authorization") @NotBlank String token,
                                 @PathVariable("id") @NotNull @Positive Long id){
         jwt.validateToken(token);
+        if(jwt.getUserIdFromToken(token).equals(id)){
+            throw new NotFoundException("Duplicate user id");
+        }
         return service.addFriend(jwt.getUserIdFromToken(token), id);
     }
 }

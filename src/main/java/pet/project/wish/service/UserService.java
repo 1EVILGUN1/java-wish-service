@@ -27,5 +27,7 @@ public interface UserService {
 
     Mono<Void> addPresent(Long userId, Long presentId);
 
+    Mono<Void> removePresent(Long userId, Long presentId);
+
     Mono<Void> addFriend(Long userId, Long friendId);
 }
