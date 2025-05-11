@@ -1,7 +1,6 @@
 package pet.project.wish.mapper;
 
 
-
 import org.springframework.stereotype.Component;
 import pet.project.wish.dto.present.PresentFullResponseDto;
 import pet.project.wish.dto.present.PresentRequestCreatedDto;

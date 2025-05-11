@@ -1,7 +1,5 @@
 package pet.project.wish.dto.present;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
 import lombok.Builder;
 
 import java.util.List;
@@ -11,9 +9,9 @@ import java.util.List;
  */
 @Builder
 public record PresentFullResponseDto(
-                             Long id,
-                             String title,
-                             String description,
-                             List<String> links,
-                             String url) {
+        Long id,
+        String title,
+        String description,
+        List<String> links,
+        String url) {
 }

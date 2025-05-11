@@ -4,7 +4,6 @@ import pet.project.wish.dto.FriendUserResponseDto;
 import pet.project.wish.dto.user.UserAuthDto;
 import pet.project.wish.dto.user.UserRequestCreatedDto;
 import pet.project.wish.dto.user.UserResponseDto;
-import pet.project.wish.model.User;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

@@ -1,4 +1,4 @@
-package pet.project.wish.service;
+package pet.project.wish.util;
 
 import io.jsonwebtoken.*;
 import lombok.extern.slf4j.Slf4j;
