@@ -1,6 +1,8 @@
 package pet.project.wish.controller;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -27,34 +29,34 @@ public class PresentController {
 
     @GetMapping(value = "/present", produces = MediaType.APPLICATION_JSON_VALUE)
     public Flux<PresentSmallResponseDto> getPresents(@RequestHeader("Authorization") @NotBlank String token) {
-        log.info("Retrieving presents for user with token: {}", token.substring(0, Math.min(token.length(), 10)) + "...");
+        log.info("Получение списка подарков для пользователя с токеном: {}", token.substring(0, Math.min(token.length(), 10)) + "...");
         return userService.getId(jwt.getUserIdFromToken(token))
                 .flatMapMany(present -> {
                     Iterable<Long> ids = present.presentIds() != null ? present.presentIds() : Collections.emptyList();
-                    log.debug("Found present IDs for user: {}", ids);
+                    log.debug("Найдены идентификаторы подарков для пользователя: {}", ids);
                     return service.getPresentsUser(Flux.fromIterable(ids))
-                            .doOnComplete(() -> log.info("Successfully retrieved presents for user"))
+                            .doOnComplete(() -> log.info("Успешно получены подарки для пользователя"))
                             .onErrorResume(NotFoundException.class, e -> {
-                                log.warn("No presents found for user: {}", e.getMessage());
+                                log.warn("Подарки для пользователя не найдены: {}", e.getMessage());
                                 return Flux.empty();
                             })
-                            .doOnError(e -> log.error("Error retrieving presents for user", e));
+                            .doOnError(e -> log.error("Ошибка при получении подарков для пользователя: {}", e.getMessage(), e));
                 });
     }
 
     @GetMapping(value = "/present/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<PresentFullResponseDto> getPresent(@RequestHeader("Authorization") @NotBlank String token,
                                                    @PathVariable("id") @NotNull @Positive Long id) {
-        log.info("Retrieving present with ID: {} for user with token: {}", id, token.substring(0, Math.min(token.length(), 10)) + "...");
+        log.info("Получение подарка с идентификатором: {} для пользователя с токеном: {}", id, token.substring(0, Math.min(token.length(), 10)) + "...");
         try {
             jwt.validateToken(token);
-            log.debug("Token validated successfully for present ID: {}", id);
+            log.debug("Токен успешно проверен для подарка с идентификатором: {}", id);
             return service.getId(id)
-                    .doOnSuccess(present -> log.info("Successfully retrieved present with ID: {}", id))
-                    .doOnError(NotFoundException.class, e -> log.warn("Present with ID: {} not found", id, e))
-                    .doOnError(e -> log.error("Error retrieving present with ID: {}", id, e));
+                    .doOnSuccess(present -> log.info("Успешно получен подарок с идентификатором: {}", id))
+                    .doOnError(NotFoundException.class, e -> log.warn("Подарок с идентификатором: {} не найден", id, e))
+                    .doOnError(e -> log.error("Ошибка при получении подарка с идентификатором: {}", id, e));
         } catch (Exception e) {
-            log.error("Invalid token for retrieving present with ID: {}", id, e);
+            log.error("Недействительный токен при получении подарка с идентификатором: {}", id, e);
             throw e;
         }
     }
